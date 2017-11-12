@@ -1,0 +1,33 @@
+GlobalSettings:
+  DeploymentRoot: s3:\\myBucket
+Environments:
+- Dev:
+    Services:
+      Service1:
+        DisplayName: Application Service 1
+        InstallPath: f:\foo\bar\1\dev\service1.exe
+        DatabaseSchema: svc1SchemaSlippery
+        StagingLocation: dev\Service1
+      Service2:
+        DisplayName: Application Service 2
+        InstallPath: f:\foo\bar\2\dev\service2.exe
+        DatabaseSchema: svc2SchemaSlope
+        StagingLocation: dev\Service2
+    Database:
+      Server: devDbServer
+      Name: devDbname
+- Test:
+    Services:
+      Service1:
+        DisplayName: Application Service 1
+        InstallPath: f:\foo\bar\1\test\service1.exe
+        DatabaseSchema: svc1SchemaFunk
+        StagingLocation: test\Service1
+      Service2:
+        DisplayName: Application Service 2
+        InstallPath: f:\foo\bar\2\test\service2.exe
+        DatabaseSchema: svc2SchemaTest
+        StagingLocation: test\Service2
+    Database:
+      Server: testDbServer
+      Name: testDbname

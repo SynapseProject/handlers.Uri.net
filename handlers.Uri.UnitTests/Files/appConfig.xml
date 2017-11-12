@@ -1,0 +1,51 @@
+<AppConfig>
+   <Environments>
+      <Environment>
+         <Dev>
+            <Database>
+               <Name>devDbname</Name>
+               <Server>devDbServer</Server>
+            </Database>
+            <Services>
+               <Service1>
+                  <DatabaseSchema>svc1SchemaSlippery</DatabaseSchema>
+                  <DisplayName>Application Service 1</DisplayName>
+                  <InstallPath>f:\foo\bar\1\dev\service1.exe</InstallPath>
+                  <StagingLocation>dev\Service1</StagingLocation>
+               </Service1>
+               <Service2>
+                  <DatabaseSchema>svc2SchemaSlope</DatabaseSchema>
+                  <DisplayName>Application Service 2</DisplayName>
+                  <InstallPath>f:\foo\bar\2\dev\service2.exe</InstallPath>
+                  <StagingLocation>dev\Service2</StagingLocation>
+               </Service2>
+            </Services>
+         </Dev>
+      </Environment>
+      <Environment>
+         <Test>
+            <Database>
+               <Name>testDbname</Name>
+               <Server>testDbServer</Server>
+            </Database>
+            <Services>
+               <Service1>
+                  <DatabaseSchema>svc1SchemaFunk</DatabaseSchema>
+                  <DisplayName>Application Service 1</DisplayName>
+                  <InstallPath>f:\foo\bar\1\test\service1.exe</InstallPath>
+                  <StagingLocation>test\Service1</StagingLocation>
+               </Service1>
+               <Service2>
+                  <DatabaseSchema>svc2SchemaTest</DatabaseSchema>
+                  <DisplayName>Application Service 2</DisplayName>
+                  <InstallPath>f:\foo\bar\2\test\service2.exe</InstallPath>
+                  <StagingLocation>test\Service2</StagingLocation>
+               </Service2>
+            </Services>
+         </Test>
+      </Environment>
+   </Environments>
+   <GlobalSettings>
+      <DeploymentRoot>s3:\\myBucket</DeploymentRoot>
+   </GlobalSettings>
+</AppConfig>

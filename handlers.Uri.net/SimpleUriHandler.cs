@@ -1,27 +1,32 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Xml;
 using Newtonsoft.Json.Linq;
+
 using Synapse.Core;
 using Synapse.Core.Utilities;
+
+using YamlDotNet.Serialization;
 
 /// <summary>
 /// This is a stub handler and will be delete/replaced with fully-featured implmentation.
 /// </summary>
-public class UriStubHandler : HandlerRuntimeBase
+public class SimpleUriHandler : HandlerRuntimeBase
 {
     public override object GetConfigInstance() { return null; }
-    public override object GetParametersInstance() { return new UriStubHandlerParameters() { Uri = "http://sample/uri" }; }
+    public override object GetParametersInstance() { return new SimpleUriHandlerParameters() { Uri = "http://sample/uri", Format = ReturnFormat.Json }; }
 
     override public ExecuteResult Execute(HandlerStartInfo startInfo)
     {
         ExecuteResult result = new ExecuteResult() { Status = StatusType.Complete };
         string msg = string.Empty;
         Exception exception = null;
+        object exitData = null;
 
-        UriStubHandlerParameters parms = DeserializeOrNew<UriStubHandlerParameters>( startInfo.Parameters );
+        SimpleUriHandlerParameters parms = DeserializeOrNew<SimpleUriHandlerParameters>( startInfo.Parameters );
 
         OnProgress( "Execute", $"Beginning fetch for {parms.Uri}.", StatusType.Running, startInfo.InstanceId, 1 );
 
@@ -32,12 +37,12 @@ public class UriStubHandler : HandlerRuntimeBase
                 case "http":
                 case "https":
                 {
-                    result.ExitData = GetHttpUri( parms.Uri ).Result;
+                    exitData = GetHttpUri( parms.Uri ).Result;
                     break;
                 }
                 case "file":
                 {
-                    result.ExitData = GetFileUri( parms.Uri );
+                    exitData = GetFileUri( parms.Uri );
                     break;
                 }
                 case "s3":
@@ -48,7 +53,12 @@ public class UriStubHandler : HandlerRuntimeBase
                 }
             }
 
-            result.ExitData = FormatData( result.ExitData, parms.Format );
+            exitData = FormatData( exitData, parms.Format );
+
+            if( parms.HasMerge )
+                MergeData( ref exitData, parms.Merge, parms.Format );
+
+            result.ExitData = exitData;
 
             msg = $"Successfully executed HttpClient.Get( {parms.Uri} ).";
         }
@@ -111,6 +121,47 @@ public class UriStubHandler : HandlerRuntimeBase
             }
         }
     }
+
+    public void MergeData(ref object data, object merge, ReturnFormat format)
+    {
+        switch( format )
+        {
+            case ReturnFormat.Yaml:
+            case ReturnFormat.Json:
+            {
+                Dictionary<object, object> exitData = data as Dictionary<object, object>;
+                YamlHelpers.Merge( ref exitData, merge as Dictionary<object, object> );
+
+                data = exitData;
+                break;
+            }
+            case ReturnFormat.Xml:
+            {
+                XmlDocument exitData = data as XmlDocument;
+
+                if( merge is XmlNode[] && ((XmlNode[])merge).Length > 0 )
+                {
+                    foreach( XmlNode node in (XmlNode[])merge )
+                    {
+                        XmlDocument mergeDoc = new XmlDocument();
+                        mergeDoc.LoadXml( $@"<root>{node.OuterXml}</root>" );
+                        XmlHelpers.Merge( ref exitData, mergeDoc );
+                    }
+                }
+                else
+                {
+                    XmlHelpers.Merge( ref exitData, merge as XmlDocument );
+                }
+
+                data = exitData;
+                break;
+            }
+            //default:
+            //{
+            //    return data;
+            //}
+        }
+    }
 }
 
 public enum ReturnFormat
@@ -121,16 +172,21 @@ public enum ReturnFormat
     Xml
 }
 
-public class UriStubHandlerParameters
+public class SimpleUriHandlerParameters
 {
     Uri _uri = null;
 
-    public UriStubHandlerParameters()
+    public SimpleUriHandlerParameters()
     {
     }
 
     public string Uri { get; set; }
+    [YamlIgnore]
     public Uri ParsedUri { get { return _uri ?? new System.Uri( this.Uri ); } }
+
+    public object Merge { get; set; }
+    [YamlIgnore]
+    public bool HasMerge { get { return Merge != null; } }
 
     public ReturnFormat Format { get; set; }
 }

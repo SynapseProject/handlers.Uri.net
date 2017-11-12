@@ -18,13 +18,13 @@ namespace handlers.Uri.UnitTests
         [Category( "File" )]
         [TestCase( "yaml_in.yaml", ReturnFormat.Yaml )]
         [TestCase( "json_in.json", ReturnFormat.Json )]
-        [TestCase( "xml_in.xml", ReturnFormat.Xml )]
+        [TestCase( "appConfig.xml", ReturnFormat.Xml )]
         public void FileAsLocalPath(string file, ReturnFormat format)
         {
-            UriStubHandler handler = new UriStubHandler();
+            SimpleUriHandler handler = new SimpleUriHandler();
             string uri = Path.Combine( Environment.CurrentDirectory, file );
 
-            UriStubHandlerParameters parms = new UriStubHandlerParameters() { Uri = uri, Format = format };
+            SimpleUriHandlerParameters parms = new SimpleUriHandlerParameters() { Uri = uri, Format = format };
             string result = handler.GetFileUri( parms.ParsedUri.ToString() );
 
             object o = handler.FormatData( result, parms.Format );
@@ -37,10 +37,10 @@ namespace handlers.Uri.UnitTests
         [TestCase( "xml_in.xml", ReturnFormat.Xml )]
         public void FileAsUncPath(string file, ReturnFormat format)
         {
-            UriStubHandler handler = new UriStubHandler();
+            SimpleUriHandler handler = new SimpleUriHandler();
             string uri = $@"\\{Environment.MachineName}\" + Path.Combine( Environment.CurrentDirectory, file ).ToLower().Replace( "c:", "c$" );
 
-            UriStubHandlerParameters parms = new UriStubHandlerParameters() { Uri = uri, Format = format };
+            SimpleUriHandlerParameters parms = new SimpleUriHandlerParameters() { Uri = uri, Format = format };
             string result = handler.GetFileUri( parms.ParsedUri.ToString() );
 
             object o = handler.FormatData( result, parms.Format );
@@ -53,10 +53,10 @@ namespace handlers.Uri.UnitTests
         [TestCase( "xml_in.xml", ReturnFormat.Xml )]
         public void FileAsUriPath(string file, ReturnFormat format)
         {
-            UriStubHandler handler = new UriStubHandler();
+            SimpleUriHandler handler = new SimpleUriHandler();
             string uri = $"file://" + Path.Combine( Environment.CurrentDirectory, file );
 
-            UriStubHandlerParameters parms = new UriStubHandlerParameters() { Uri = uri, Format = format };
+            SimpleUriHandlerParameters parms = new SimpleUriHandlerParameters() { Uri = uri, Format = format };
             string result = handler.GetFileUri( parms.ParsedUri.ToString() );
 
             object o = handler.FormatData( result, parms.Format );
