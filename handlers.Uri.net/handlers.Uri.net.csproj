@@ -41,11 +41,15 @@
       <HintPath>..\packages\Newtonsoft.Json.6.0.4\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="RestSharp, Version=106.1.0.0, Culture=neutral, PublicKeyToken=598062e77f915f75, processorArchitecture=MSIL">
+      <HintPath>..\packages\RestSharp.106.1.0\lib\net452\RestSharp.dll</HintPath>
+    </Reference>
     <Reference Include="Synapse.Core, Version=0.1.0.0, Culture=neutral, PublicKeyToken=a6de1cc56b73f982, processorArchitecture=MSIL">
       <HintPath>..\packages\Synapse.Core.Signed.0.1.17305.0-beta\lib\net45\Synapse.Core.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -60,8 +64,10 @@
     <Compile Include="AwsS3FileRequest.cs" />
     <Compile Include="AwsS3Handler.cs" />
     <Compile Include="AzureBlobHandler.cs" />
-    <Compile Include="FileUrilHandler.cs" />
-    <Compile Include="RestUriHandler.cs" />
+    <Compile Include="ClientRequest.cs" />
+    <Compile Include="FileHandler.cs" />
+    <Compile Include="RestHandler.cs" />
+    <Compile Include="RestHandlerConfig.cs" />
     <Compile Include="S3Client.cs" />
     <Compile Include="SimpleUriHandler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

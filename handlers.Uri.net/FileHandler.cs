@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Synapse.Core;
 
-public class FileUrilHandler : HandlerRuntimeBase
+public class FileHandler : HandlerRuntimeBase
 {
     public override object GetConfigInstance()
     {

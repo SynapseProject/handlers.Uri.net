@@ -14,7 +14,7 @@ public class AwsS3Handler : HandlerRuntimeBase
     private int _sequenceNumber = 0;
     private string _mainProgressMsg = "";
     private string _context = "Execute";
-    private bool _encounteredFailure = false;
+    // private bool _encounteredFailure = false;
 
     public override object GetConfigInstance()
     {
