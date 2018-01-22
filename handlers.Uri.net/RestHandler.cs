@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using RestSharp;
 using Synapse.Core;
 
@@ -32,7 +34,16 @@ public class RestHandler : HandlerRuntimeBase
 
     public override object GetParametersInstance()
     {
-        throw new NotImplementedException();
+        return new ClientRequest()
+        {
+            Authorization = "anonymous",
+            Body = "",
+            Headers = null,
+            Password = "",
+            Method = "get",
+            Url = "http://xxx.com",
+            Username = "xxxx"
+        };
     }
 
     public override ExecuteResult Execute(HandlerStartInfo startInfo)
@@ -57,22 +68,33 @@ public class RestHandler : HandlerRuntimeBase
             if (!startInfo.IsDryRun)
             {
                 RestClient client = new RestClient( parms.Url );
-                Enum.TryParse( parms.Method, out Method method );
-                RestRequest request = new RestRequest( method );
-                IRestResponse response = client.Execute( request );
-                if ( response.IsSuccessful )
+                bool isValidMethod = Enum.TryParse( parms.Method, out Method method );
+                if (isValidMethod)
                 {
-                    _result.ExitData = response;
-                    _result.ExitCode = 0;
+                    RestRequest request = new RestRequest(method);
+                    if (method == Method.POST || method == Method.PUT )
+                    {
+                        request.AddParameter("application/json", parms.Body, ParameterType.RequestBody);
+                    }
+                    IRestResponse response = client.Execute(request);
+                    if (response.IsSuccessful)
+                    {
+                        _result.ExitData = response.Content;
+                        _result.ExitCode = 0;
+                    }
+                    else
+                    {
+                        _result.ExitCode = -1;
+                    }
+                    _mainProgressMsg = response.StatusDescription;
                 }
                 else
                 {
-                    _result.ExitCode = -1;
+                    throw new Exception($"'{parms.Method}' is not a valid HTTP method.");
                 }
-                _mainProgressMsg = response.StatusDescription;
             }
             
-            _mainProgressMsg = startInfo.IsDryRun ? "Dry run execution is completed." : $"Execution is completed. {_mainProgressMsg}";
+            _mainProgressMsg = startInfo.IsDryRun ? "Dry run execution is completed." : $"Execution is completed. Server Status: {_mainProgressMsg}";
         }
         catch ( Exception ex )
         {
@@ -113,7 +135,7 @@ public class RestHandler : HandlerRuntimeBase
 
         List<string> validAuthorization = new List<string>()
         {
-            "anonymous",
+            "none",
             "basic",
             "ntlm",
             "oauth"
