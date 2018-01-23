@@ -65,6 +65,7 @@
     <Compile Include="AwsS3Handler.cs" />
     <Compile Include="AzureBlobHandler.cs" />
     <Compile Include="ClientRequest.cs" />
+    <Compile Include="DigestAuthenticator.cs" />
     <Compile Include="FileHandler.cs" />
     <Compile Include="RestHandler.cs" />
     <Compile Include="RestHandlerConfig.cs" />

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RestSharp;
+using RestSharp.Authenticators;
 using Synapse.Core;
 
 public class RestHandler : HandlerRuntimeBase
@@ -68,6 +69,29 @@ public class RestHandler : HandlerRuntimeBase
             if (!startInfo.IsDryRun)
             {
                 RestClient client = new RestClient( parms.Url );
+                if (!string.IsNullOrWhiteSpace(parms.Authorization))
+                {
+                    switch (parms.Authorization)
+                    {
+                        case "basic":
+                            client.Authenticator = new HttpBasicAuthenticator(parms.Username, parms.Password);
+                            break;
+                        case "digest":
+                            client.Authenticator = new DigestAuthenticator( parms.Username, parms.Password );
+                            break;
+                        case "ntlm":
+                            client.Authenticator = new NtlmAuthenticator(parms.Username, parms.Password);
+                            break;
+                        case "oauth1":
+                            client.Authenticator = new OAuth1Authenticator();
+                            break;
+                        case "oauth2":
+                            client.Authenticator = new OAuth2AuthorizationRequestHeaderAuthenticator("xxx", "yyy");
+                            break;
+                        default:
+                            throw new Exception("Authorization specified is invalid or not supported.");
+                    }
+                }
                 bool isValidMethod = Enum.TryParse( parms.Method, out Method method );
                 if (isValidMethod)
                 {
@@ -128,17 +152,19 @@ public class RestHandler : HandlerRuntimeBase
             throw new Exception( "Url specified is not valid." );
     }
 
-    private bool IsValidAuthorization(string authorization = "anonymous")
+    private bool IsValidAuthorization(string authorization = "none")
     {
         if ( string.IsNullOrWhiteSpace( authorization ) )
-            authorization = "anonymous";
+            authorization = "none";
 
         List<string> validAuthorization = new List<string>()
         {
-            "none",
             "basic",
+            "digest",
+            "none",
             "ntlm",
-            "oauth"
+            "oauth1",
+            "oauth2"
         };
         return validAuthorization.Contains( authorization );
     }
