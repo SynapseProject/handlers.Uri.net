@@ -31,7 +31,7 @@ public class DigestAuthenticator : IAuthenticator
             var digestAuthFixer = new DigestAuthFixer( client.BaseUrl.ToString(), _user, _pass );
             digestAuthFixer.GrabResponse( uri.PathAndQuery );
             var digestHeader = digestAuthFixer.GetDigestHeader( uri.PathAndQuery );
-            request.AddParameter( "Authorization", digestHeader, ParameterType.HttpHeader );
+            request.AddParameter( "Authentication", digestHeader, ParameterType.HttpHeader );
         }
 
     }
@@ -103,7 +103,7 @@ public class DigestAuthFixer
         // If we've got a recent Auth header, re-use it!
         if ( !string.IsNullOrEmpty( _cnonce ) && DateTime.Now.Subtract( _cnonceDate ).TotalHours < 1.0 )
         {
-            request.Headers.Add( "Authorization", GetDigestHeader( dir ) );
+            request.Headers.Add( "Authentication", GetDigestHeader( dir ) );
         }
 
         HttpWebResponse response;
@@ -113,7 +113,7 @@ public class DigestAuthFixer
         }
         catch ( WebException ex )
         {
-            // Try to fix a 401 exception by adding a Authorization header
+            // Try to fix a 401 exception by adding a Authentication header
             if ( ex.Response == null || ((HttpWebResponse)ex.Response).StatusCode != HttpStatusCode.Unauthorized )
                 throw;
 

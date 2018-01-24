@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using RestSharp;
 using RestSharp.Authenticators;
 using Synapse.Core;
@@ -26,7 +21,7 @@ public class RestHandler : HandlerRuntimeBase
     {
         return new RestHandlerConfig()
         {
-            Authorization = "basic",
+            Authentication = "basic",
             MaxAllowedResponseLength = 500000,
             Username = "xxxxxx",
             Password = "xxxxxx"
@@ -37,20 +32,20 @@ public class RestHandler : HandlerRuntimeBase
     {
         return new ClientRequest()
         {
-            Authorization = "anonymous",
+            Authentication = "NONE",
             Body = "",
             Headers = null,
-            Password = "",
-            Method = "get",
+            Method = "GET",
             Url = "http://xxx.com",
-            Username = "xxxx"
+            Username = "XXX",
+            Password = "XXX"
         };
     }
 
     public override ExecuteResult Execute(HandlerStartInfo startInfo)
     {
         int sequenceNumber = 0;
-        string context = "Execute";
+        const string context = "Execute";
 
         try
         {
@@ -66,40 +61,45 @@ public class RestHandler : HandlerRuntimeBase
 
             ValidateClientRequest( parms );
 
-            if (!startInfo.IsDryRun)
+            RestClient client = new RestClient( parms.Url );
+            //                client.Proxy = new WebProxy("http://127.0.0.1:8888");
+
+            switch ( parms.Authentication.ToUpper() )
             {
-                RestClient client = new RestClient( parms.Url );
-                if (!string.IsNullOrWhiteSpace(parms.Authorization))
+                case "BASIC":
+                    client.Authenticator = new HttpBasicAuthenticator( parms.Username, parms.Password );
+                    break;
+                case "DIGEST":
+                    client.Authenticator = new DigestAuthenticator( parms.Username, parms.Password );
+                    break;
+                case "NTLM":
+                    if ( string.IsNullOrWhiteSpace( parms.Username ) && string.IsNullOrWhiteSpace( parms.Password ) )
+                        client.Authenticator = new WindowsAuthenticator();
+                    else
+                        client.Authenticator = new NtlmAuthenticator( parms.Username, parms.Password );
+                    break;
+                case "OAUTH1":
+                    client.Authenticator = new OAuth1Authenticator();
+                    break;
+                case "OAUTH2":
+                    client.Authenticator = new OAuth2AuthorizationRequestHeaderAuthenticator( "xxx", "yyy" );
+                    break;
+                case "NONE":
+                    break;
+                default:
+                    throw new Exception( "Authentication specified is invalid or not supported." );
+            }
+
+            bool isValidMethod = Enum.TryParse( parms.Method.ToUpper(), out Method method );
+            if ( isValidMethod )
+            {
+                RestRequest request = new RestRequest( method );
+                if ( method == Method.POST || method == Method.PUT )
                 {
-                    switch (parms.Authorization)
-                    {
-                        case "basic":
-                            client.Authenticator = new HttpBasicAuthenticator(parms.Username, parms.Password);
-                            break;
-                        case "digest":
-                            client.Authenticator = new DigestAuthenticator( parms.Username, parms.Password );
-                            break;
-                        case "ntlm":
-                            client.Authenticator = new NtlmAuthenticator(parms.Username, parms.Password);
-                            break;
-                        case "oauth1":
-                            client.Authenticator = new OAuth1Authenticator();
-                            break;
-                        case "oauth2":
-                            client.Authenticator = new OAuth2AuthorizationRequestHeaderAuthenticator("xxx", "yyy");
-                            break;
-                        default:
-                            throw new Exception("Authorization specified is invalid or not supported.");
-                    }
+                    request.AddParameter( "application/json", parms.Body, ParameterType.RequestBody );
                 }
-                bool isValidMethod = Enum.TryParse( parms.Method, out Method method );
-                if (isValidMethod)
+                if (!startInfo.IsDryRun)
                 {
-                    RestRequest request = new RestRequest(method);
-                    if (method == Method.POST || method == Method.PUT )
-                    {
-                        request.AddParameter("application/json", parms.Body, ParameterType.RequestBody);
-                    }
                     IRestResponse response = client.Execute(request);
                     if (response.IsSuccessful)
                     {
@@ -112,12 +112,12 @@ public class RestHandler : HandlerRuntimeBase
                     }
                     _mainProgressMsg = response.StatusDescription;
                 }
-                else
-                {
-                    throw new Exception($"'{parms.Method}' is not a valid HTTP method.");
-                }
             }
-            
+            else
+            {
+                throw new Exception( $"'{parms.Method}' is not a valid HTTP method." );
+            }
+
             _mainProgressMsg = startInfo.IsDryRun ? "Dry run execution is completed." : $"Execution is completed. Server Status: {_mainProgressMsg}";
         }
         catch ( Exception ex )
@@ -143,33 +143,33 @@ public class RestHandler : HandlerRuntimeBase
             throw new Exception( "Url cannot be null or empty." );
 
         if ( !IsValidHttpMethod( request.Method ) )
-            throw new Exception( "Http method specified is not alid." );
+            throw new Exception( "Http method specified is not valid." );
 
-        if ( !IsValidAuthorization( request.Authorization ) )
-            throw new Exception( "Authorization specified is not valid." );
+        if ( !IsValidAuthentication( request.Authentication ) )
+            throw new Exception( "Authentication specified is not valid." );
 
-        if ( !IsValidUrl( request.Url ) )
-            throw new Exception( "Url specified is not valid." );
+        if ( !IsValidProtocol( request.Url ) )
+            throw new Exception( "Protocol specified is not valid." );
     }
 
-    private bool IsValidAuthorization(string authorization = "none")
+    private static bool IsValidAuthentication(string authentication = "NONE")
     {
-        if ( string.IsNullOrWhiteSpace( authorization ) )
-            authorization = "none";
+        if ( string.IsNullOrWhiteSpace( authentication ) )
+            authentication = "NONE";
 
-        List<string> validAuthorization = new List<string>()
+        List<string> validAuthentications = new List<string>()
         {
-            "basic",
-            "digest",
-            "none",
-            "ntlm",
-            "oauth1",
-            "oauth2"
+            "BASIC",
+            "DIGEST",
+            "NONE",
+            "NTLM",
+            "OAUTH1",
+            "OAUTH2"
         };
-        return validAuthorization.Contains( authorization );
+        return validAuthentications.Contains( authentication.ToUpper() );
     }
 
-    private bool IsValidUrl(string url)
+    private static bool IsValidProtocol(string url)
     {
         if ( string.IsNullOrWhiteSpace( url ) )
             return false;
@@ -185,7 +185,7 @@ public class RestHandler : HandlerRuntimeBase
         try
         {
             Uri newUri = new Uri( url );
-            urlScheme = newUri.Scheme;
+            urlScheme = newUri.Scheme; // Always in lower-case
         }
         catch ( Exception )
         {
@@ -194,20 +194,19 @@ public class RestHandler : HandlerRuntimeBase
         return schemes.Contains( urlScheme );
     }
 
-    private bool IsValidHttpMethod(string method)
+    private static bool IsValidHttpMethod(string method)
     {
         if ( string.IsNullOrWhiteSpace( method ) )
             return false;
 
         List<string> validMethods = new List<string>()
         {
-            "get",
-            "post",
-            "put",
-            "delete"
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE"
         };
-        return validMethods.Contains( method.ToLower() );
-
+        return validMethods.Contains( method.ToUpper() );
     }
 
     private static string RemoveParameterSingleQuote(string input)

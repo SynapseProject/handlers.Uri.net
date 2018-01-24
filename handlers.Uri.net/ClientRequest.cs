@@ -1,6 +1,6 @@
 ﻿public class ClientRequest
 {
-    public string Authorization { get; set; }
+    public string Authentication { get; set; }
 
     public string Username { get; set; }
 

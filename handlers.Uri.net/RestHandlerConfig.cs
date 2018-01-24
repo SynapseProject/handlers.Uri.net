@@ -1,6 +1,6 @@
 ﻿public class RestHandlerConfig
 {
-    public string Authorization { get; set; } // basic, ntlm etc
+    public string Authentication { get; set; } // basic, ntlm etc
 
     public string Username { get; set; }
 
