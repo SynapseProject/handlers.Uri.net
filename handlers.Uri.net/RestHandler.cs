@@ -152,10 +152,10 @@ public class RestHandler : HandlerRuntimeBase
             throw new Exception( "Protocol specified is not valid." );
     }
 
-    private static bool IsValidAuthentication(string authentication = "NONE")
+    private static bool IsValidAuthentication(string authentication)
     {
-        if ( string.IsNullOrWhiteSpace( authentication ) )
-            authentication = "NONE";
+        if (string.IsNullOrWhiteSpace(authentication))
+            return false;
 
         List<string> validAuthentications = new List<string>()
         {
