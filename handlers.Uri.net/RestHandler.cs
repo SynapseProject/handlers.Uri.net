@@ -46,6 +46,7 @@ public class RestHandler : HandlerRuntimeBase
     {
         int sequenceNumber = 0;
         const string context = "Execute";
+        Impersonator impersonator = null; // For Windows Authentication
 
         try
         {
@@ -73,10 +74,13 @@ public class RestHandler : HandlerRuntimeBase
                     client.Authenticator = new DigestAuthenticator( parms.Username, parms.Password );
                     break;
                 case "NTLM":
-                    if ( string.IsNullOrWhiteSpace( parms.Username ) && string.IsNullOrWhiteSpace( parms.Password ) )
-                        client.Authenticator = new WindowsAuthenticator();
+                    if ( string.IsNullOrWhiteSpace( parms.Username ) && string.IsNullOrWhiteSpace( parms.Password ) && string.IsNullOrWhiteSpace( parms.Domain ) )
+                        throw new Exception( "Username, password or domain cannot be null." );
                     else
-                        client.Authenticator = new NtlmAuthenticator( parms.Username, parms.Password );
+                    {
+                        impersonator = new Impersonator( parms.Username, parms.Domain, parms.Password );
+                        client.Authenticator = new NtlmAuthenticator();
+                    }
                     break;
                 case "OAUTH1":
                     client.Authenticator = new OAuth1Authenticator();
@@ -98,10 +102,10 @@ public class RestHandler : HandlerRuntimeBase
                 {
                     request.AddParameter( "application/json", parms.Body, ParameterType.RequestBody );
                 }
-                if (!startInfo.IsDryRun)
+                if ( !startInfo.IsDryRun )
                 {
-                    IRestResponse response = client.Execute(request);
-                    if (response.IsSuccessful)
+                    IRestResponse response = client.Execute( request );
+                    if ( response.IsSuccessful )
                     {
                         _result.ExitData = response.Content;
                         _result.ExitCode = 0;
@@ -126,6 +130,10 @@ public class RestHandler : HandlerRuntimeBase
             OnLogMessage( context, _mainProgressMsg, LogLevel.Error );
             _result.Status = StatusType.Failed;
             _result.ExitCode = -1;
+        }
+        finally
+        {
+            impersonator?.Dispose();
         }
 
         _result.Message = _mainProgressMsg;
@@ -154,7 +162,7 @@ public class RestHandler : HandlerRuntimeBase
 
     private static bool IsValidAuthentication(string authentication)
     {
-        if (string.IsNullOrWhiteSpace(authentication))
+        if ( string.IsNullOrWhiteSpace( authentication ) )
             return false;
 
         List<string> validAuthentications = new List<string>()

@@ -6,6 +6,8 @@
 
     public string Password { get; set; }
 
+    public string Domain { get; set; }
+
     public string Url { get; set; }
 
     public string Body { get; set; }
