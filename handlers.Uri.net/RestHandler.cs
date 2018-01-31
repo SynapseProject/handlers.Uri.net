@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Security.Principal;
 using System.Text.RegularExpressions;
 using RestSharp;
 using RestSharp.Authenticators;
@@ -7,7 +9,7 @@ using Synapse.Core;
 
 public class RestHandler : HandlerRuntimeBase
 {
-    private RestHandlerConfig _config;
+//    private RestHandlerConfig _config;
     private readonly ExecuteResult _result = new ExecuteResult()
     {
         Status = StatusType.None,
@@ -15,7 +17,6 @@ public class RestHandler : HandlerRuntimeBase
         Sequence = int.MaxValue
     };
     private string _mainProgressMsg = "";
-    // private string _subProgressMsg = "";
 
     public override object GetConfigInstance()
     {
@@ -32,13 +33,14 @@ public class RestHandler : HandlerRuntimeBase
     {
         return new ClientRequest()
         {
-            Authentication = "NONE",
+            Authentication = "NTLM",
             Body = "",
             Headers = null,
             Method = "GET",
             Url = "http://xxx.com",
             Username = "XXX",
-            Password = "XXX"
+            Password = "XXX",
+            Domain = "XXX"
         };
     }
 
@@ -46,7 +48,6 @@ public class RestHandler : HandlerRuntimeBase
     {
         int sequenceNumber = 0;
         const string context = "Execute";
-        Impersonator impersonator = null; // For Windows Authentication
 
         try
         {
@@ -63,7 +64,7 @@ public class RestHandler : HandlerRuntimeBase
             ValidateClientRequest( parms );
 
             RestClient client = new RestClient( parms.Url );
-            //                client.Proxy = new WebProxy("http://127.0.0.1:8888");
+//            client.Proxy = new WebProxy("http://127.0.0.1:8888");
 
             switch ( parms.Authentication.ToUpper() )
             {
@@ -77,10 +78,7 @@ public class RestHandler : HandlerRuntimeBase
                     if ( string.IsNullOrWhiteSpace( parms.Username ) && string.IsNullOrWhiteSpace( parms.Password ) && string.IsNullOrWhiteSpace( parms.Domain ) )
                         throw new Exception( "Username, password or domain cannot be null." );
                     else
-                    {
-                        impersonator = new Impersonator( parms.Username, parms.Domain, parms.Password );
-                        client.Authenticator = new NtlmAuthenticator();
-                    }
+                        client.Authenticator = new NtlmAuthenticator(new NetworkCredential(parms.Username, parms.Password, parms.Domain));
                     break;
                 case "OAUTH1":
                     client.Authenticator = new OAuth1Authenticator();
@@ -112,6 +110,7 @@ public class RestHandler : HandlerRuntimeBase
                     }
                     else
                     {
+                        _result.ExitData = response.Content;
                         _result.ExitCode = -1;
                     }
                     _mainProgressMsg = response.StatusDescription;
@@ -123,6 +122,7 @@ public class RestHandler : HandlerRuntimeBase
             }
 
             _mainProgressMsg = startInfo.IsDryRun ? "Dry run execution is completed." : $"Execution is completed. Server Status: {_mainProgressMsg}";
+            _result.Status = StatusType.Complete;
         }
         catch ( Exception ex )
         {
@@ -130,10 +130,6 @@ public class RestHandler : HandlerRuntimeBase
             OnLogMessage( context, _mainProgressMsg, LogLevel.Error );
             _result.Status = StatusType.Failed;
             _result.ExitCode = -1;
-        }
-        finally
-        {
-            impersonator?.Dispose();
         }
 
         _result.Message = _mainProgressMsg;

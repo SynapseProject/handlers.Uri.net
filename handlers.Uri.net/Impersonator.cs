@@ -105,7 +105,7 @@ public class Impersonator : IDisposable
                     userName,
                     domain,
                     password,
-                    LOGON32_LOGON_NEW_CREDENTIALS,
+                    LOGON32_LOGON_NETWORK,
                     LOGON32_PROVIDER_DEFAULT,
                     ref token ) != 0 )
                 {
@@ -157,4 +157,31 @@ public class Impersonator : IDisposable
 
     // ------------------------------------------------------------------
     #endregion
+}
+
+public enum LogonType
+{
+    LOGON32_LOGON_INTERACTIVE = 2,
+    LOGON32_LOGON_NETWORK = 3,
+    LOGON32_LOGON_BATCH = 4,
+    LOGON32_LOGON_SERVICE = 5,
+    LOGON32_LOGON_UNLOCK = 7,
+    LOGON32_LOGON_NETWORK_CLEARTEXT = 8, // Win2K or higher
+    LOGON32_LOGON_NEW_CREDENTIALS = 9 // Win2K or higher
+};
+
+public enum LogonProvider
+{
+    LOGON32_PROVIDER_DEFAULT = 0,
+    LOGON32_PROVIDER_WINNT35 = 1,
+    LOGON32_PROVIDER_WINNT40 = 2,
+    LOGON32_PROVIDER_WINNT50 = 3
+};
+
+public enum ImpersonationLevel
+{
+    SecurityAnonymous = 0,
+    SecurityIdentification = 1,
+    SecurityImpersonation = 2,
+    SecurityDelegation = 3
 }

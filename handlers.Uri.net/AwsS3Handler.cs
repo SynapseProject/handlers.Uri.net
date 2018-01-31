@@ -68,7 +68,7 @@ public class AwsS3Handler : HandlerRuntimeBase
             //            var fileStream = s3Client.GetObjectStream("wu2-p3-0392-synapse-001", "Active Directory Role Based Management.pdf");
             //            s3Client.CopyObjectToLocal( "wu2-p3-0392-synapse-001", "Active Directory Role Based Management.pdf", "c:\\temp");
         }
-        catch ( Exception ex )
+        catch ( Exception )
         {
 //            UpdateProgress( ex.Message, StatusType.Failed );
 //            _encounteredFailure = true;
