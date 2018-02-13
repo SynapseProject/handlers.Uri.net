@@ -15,4 +15,6 @@
     public HttpHeaders Headers { get; set;}
 
     public string Method { get; set; } // GET, POST, PUT, DELETE
+
+    public string ContentType { get; set; } // e.g. application/json
 }

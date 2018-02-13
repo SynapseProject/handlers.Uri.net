@@ -53,8 +53,7 @@ public class RestHandler : HandlerRuntimeBase
         {
             _mainProgressMsg = "Processing client request...";
             OnProgress( context, _mainProgressMsg, _result.Status, sequenceNumber );
-            string inputParameters = RemoveParameterSingleQuote( startInfo.Parameters );
-            ClientRequest parms = DeserializeOrNew<ClientRequest>( inputParameters );
+            ClientRequest parms = DeserializeOrNew<ClientRequest>( startInfo.Parameters );
 
             _mainProgressMsg = "Validating request...";
             _result.Status = StatusType.Running;
@@ -98,7 +97,9 @@ public class RestHandler : HandlerRuntimeBase
                 RestRequest request = new RestRequest( method );
                 if ( method == Method.POST || method == Method.PUT )
                 {
-                    request.AddParameter( "application/json", parms.Body, ParameterType.RequestBody );
+                    if (string.IsNullOrWhiteSpace(parms.ContentType))
+                        throw new Exception("Content type cannot be null for POST and PUT method.");
+                    request.AddParameter( parms.ContentType, parms.Body, ParameterType.RequestBody );
                 }
                 if ( !startInfo.IsDryRun )
                 {
